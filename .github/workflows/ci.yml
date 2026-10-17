@@ -65,27 +65,24 @@ jobs:
       # Setup the build machine with the most recent versions of CMake and Ninja. Both are cached if not already: on subsequent runs both will be quickly restored from GitHub cache service.
       - uses: lukka/get-cmake@latest
 
-      # On Windows runners, let's ensure to have the Developer Command Prompt environment setup correctly. As used here the Developer Command Prompt created is targeting x64 and using the default the Windows SDK.
-      - uses: ilammy/msvc-dev-cmd@v1
-
       # Run CMake to generate Ninja project files
       - name: Generate project files
         run: |
-          cmake -B "${{ env.CMAKE_BUILD_DIR }}" -GNinja -DCMAKE_BUILD_TYPE=Release -DBGFX_BUILD_TESTS=ON
+          cmake -B "${{ env.CMAKE_BUILD_DIR }}" ${{ runner.os != 'Windows' && '-GNinja' || '' }} -DCMAKE_BUILD_TYPE=Release -DBGFX_BUILD_TESTS=ON
 
       # Build the whole project with Ninja (which is spawn by CMake).
       - name: Build
         run: |
-          cmake --build "${{ env.CMAKE_BUILD_DIR }}"
+          cmake --build "${{ env.CMAKE_BUILD_DIR }}" --config Release
 
       # Build the examples which are excluded from all
       - name: Build examples
         run: |
-          cmake --build "${{ env.CMAKE_BUILD_DIR }}" --target bgfx-examples
+          cmake --build "${{ env.CMAKE_BUILD_DIR }}" --config Release --target bgfx-examples
 
       - name: Run bx tests
         run: |
-          ctest --test-dir "${{ env.CMAKE_BUILD_DIR }}" -R bx.test --output-on-failure
+          ctest --test-dir "${{ env.CMAKE_BUILD_DIR }}" -C Release -R bx.test --output-on-failure
 
   cross-android:
     name: cross-android
@@ -103,9 +100,6 @@ jobs:
 
       # Setup the build machine with the most recent versions of CMake and Ninja. Both are cached if not already: on subsequent runs both will be quickly restored from GitHub cache service.
       - uses: lukka/get-cmake@latest
-
-      # On Windows runners, let's ensure to have the Developer Command Prompt environment setup correctly. As used here the Developer Command Prompt created is targeting x64 and using the default the Windows SDK.
-      - uses: ilammy/msvc-dev-cmd@v1
 
       # Run CMake to generate Ninja project files
       - name: Generate project files
